@@ -26,13 +26,37 @@ function Test.ObjectJoin_Merge-Object_ObjectsImplicitParams()
 }
 
 function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineExplicitParams()
-{}
+{
+    $a = New-Object PSObject -Property @{id='a';name='Aye'}
+    $b = New-Object PSObject -Property @{color='green';level=7}
+    $ab = New-Object PSObject -Property @{id='a';name='Aye';color='green';level=7}
+
+    $Actual = $a | Merge-Object -Base $b
+
+    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+}
 
 function Test.ObjectJoin_Merge-Object_ObjectsExplicitParams()
-{}
+{
+    $a = New-Object PSObject -Property @{id='a';name='Aye'}
+    $b = New-Object PSObject -Property @{color='green';level=7}
+    $ab = New-Object PSObject -Property @{id='a';name='Aye';color='green';level=7}
+
+    $Actual = Merge-Object -InputObject $a -Base $b
+
+    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+}
 
 function Test.ObjectJoin_Merge-Object_ObjectsWithConflictingProperties()
-{}
+{
+    $a = New-Object PSObject -Property @{id='a';name='Aye'}
+    $b = New-Object PSObject -Property @{name='Bee';color='green';level=7}
+    $ab = New-Object PSObject -Property @{id='a';name='Bee';color='green';level=7}
+
+    $Actual = Merge-Object -InputObject $a -Base $b
+
+    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+}
 
 function Test.ObjectJoin_Merge-Object_ArraysNaively()
 {}
