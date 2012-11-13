@@ -1,3 +1,5 @@
 Clone this module into your Documents/WindowsPowershell/Modules/ folder.
 
-Run the tests by running ./Tests.ps1.
+The Tests.ps1 file requires PSUnit to be properly installed.
+
+Get PSUnit from http://psunit.org.
