@@ -3,7 +3,7 @@
 
 Import-Module -Name ".\ObjectJoin.psm1" -Force
 
-function Test.ObjectJoin_Merge-Object_MergeTwoObjectsOneFromPipeline()
+function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineImplicitParams()
 {
     $a = New-Object PSObject -Property @{id='a';name='Aye'}
     $b = New-Object PSObject -Property @{color='green';level=7}
@@ -14,19 +14,37 @@ function Test.ObjectJoin_Merge-Object_MergeTwoObjectsOneFromPipeline()
     Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
 }
 
-#Write-Host "Test Merging two objects"
+function Test.ObjectJoin_Merge-Object_ObjectsImplicitParams()
+{
+    $a = New-Object PSObject -Property @{id='a';name='Aye'}
+    $b = New-Object PSObject -Property @{color='green';level=7}
+    $ab = New-Object PSObject -Property @{id='a';name='Aye';color='green';level=7}
 
-#Write-Host "Test Merging two arrays niavely"
+    $Actual = Merge-Object $a $b
 
-#Write-Host "Test Merging an array to an object"
+    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+}
 
-#Write-Host "Test Merging an object to an array"
+function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineExplicitParams()
+{}
 
-#Write-Host "Test Merging two arrays with different indexes"
+function Test.ObjectJoin_Merge-Object_ObjectsExplicitParams()
+{}
 
-#Write-Host "Test Merging a large base to a small input array, appending extras"
+function Test.ObjectJoin_Merge-Object_ObjectsWithConflictingProperties()
+{}
 
-#Write-Host "Test Merging a small base to a large array, appending extras"
+function Test.ObjectJoin_Merge-Object_ArraysNaively()
+{}
 
+function Test.ObjectJoin_Merge-Object_ArraysNaivelyAppendInputExtras()
+{}
 
-# Other tests here. There's alot of permutations of this command to test.
+function Test.ObjectJoin_Merge-Object_ArraysNaivelyDiscardBaseExtras()
+{}
+
+function Test.ObjectJoin_Merge-Object_ArraysSameIndexProperty()
+{}
+
+function Test.ObjectJoin_Merge-Object_ArraysDifferentIndexProperty()
+{}
