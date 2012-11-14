@@ -7,8 +7,8 @@ function Compare-ObjectProperties
 {
     Param($a, $b)
 
-    $aProperties = $a | Get-Member -MemberType NoteProperty
-    $bProperties = $b | Get-Member -MemberType NoteProperty
+    $aProperties = @($a | Get-Member -MemberType NoteProperty)
+    $bProperties = @($b | Get-Member -MemberType NoteProperty)
 
     diff $aProperties $bProperties
 }
@@ -69,16 +69,85 @@ function Test.ObjectJoin_Merge-Object_ObjectsWithConflictingProperties()
 }
 
 function Test.ObjectJoin_Merge-Object_ArraysNaively()
-{}
+{
+    $a = @(
+        (New-Object PSObject -Property @{color="red";index=1}),
+        (New-Object PSObject -Property @{color="blue";index=2}),
+        (New-Object PSObject -Property @{color="green";index=3})
+    )
+    $b = @(
+        (New-Object PSObject -Property @{size="small";starbucks="tall"}),
+        (New-Object PSObject -Property @{size="medium";starbucks="grande"}),
+        (New-Object PSObject -Property @{size="large";starbucks="venti"})
+    )
+    $ab = @(
+        (New-Object PSObject -Property @{color='red';index=1;size='small';starbucks='tall'}),
+        (New-Object PSObject -Property @{color='blue';index=2;size='medium';starbucks='grande'}),
+        (New-Object PSObject -Property @{color='green';index=3;size='large';starbucks='venti'})
+    )
+
+    $Actual = $a | Merge-Object $b
+    $Differences = @($Actual | ForEach -Begin {$i=0} -Process {
+        if((Compare-ObjectProperties $_ $ab[$i]) -ne $null) {$false}
+        $i = $i + 1
+    })
+
+    Assert-That -ActualValue $Differences -Constraint {$ActualValue.Count -eq 0}
+}
 
 function Test.ObjectJoin_Merge-Object_ArraysNaivelyAppendInputExtras()
-{}
+{
+    $a = @(
+        (New-Object PSObject -Property @{color="red";index=1}),
+        (New-Object PSObject -Property @{color="blue";index=2}),
+        (New-Object PSObject -Property @{color="green";index=3})
+    )
+    $b = @(
+        (New-Object PSObject -Property @{size="small";starbucks="tall"}),
+        (New-Object PSObject -Property @{size="medium";starbucks="grande"})
+    )
+    $ab = @(
+        (New-Object PSObject -Property @{color='red';index=1;size='small';starbucks='tall'}),
+        (New-Object PSObject -Property @{color='blue';index=2;size='medium';starbucks='grande'}),
+        (New-Object PSObject -Property @{color='green';index=3})
+    )
+
+    $Actual = $a | Merge-Object $b -AppendInputExtras
+    $Differences = @($Actual | ForEach -Begin {$i=0} -Process {
+        if((Compare-ObjectProperties $_ $ab[$i]) -ne $null) {$false}
+        $i = $i + 1
+    })
+
+    Assert-That -ActualValue $Differences -Constraint {$ActualValue.Count -eq 0}
+}
 
 function Test.ObjectJoin_Merge-Object_ArraysNaivelyDiscardBaseExtras()
-{}
+{
+    $a = @(
+        (New-Object PSObject -Property @{color="red";index=1}),
+        (New-Object PSObject -Property @{color="blue";index=2})
+    )
+    $b = @(
+        (New-Object PSObject -Property @{size="small";starbucks="tall"}),
+        (New-Object PSObject -Property @{size="medium";starbucks="grande"}),
+        (New-Object PSObject -Property @{size="large";starbucks="venti"})
+    )
+    $ab = @(
+        (New-Object PSObject -Property @{color='red';index=1;size='small';starbucks='tall'}),
+        (New-Object PSObject -Property @{color='blue';index=2;size='medium';starbucks='grande'})
+    )
 
-function Test.ObjectJoin_Merge-Object_ArraysSameIndexProperty()
-{}
+    $Actual = $a | Merge-Object $b -DiscardBaseExtras
+    $Differences = @($Actual | ForEach -Begin {$i=0} -Process {
+        if((Compare-ObjectProperties $_ $ab[$i]) -ne $null) {$false}
+        $i = $i + 1
+    })
 
-function Test.ObjectJoin_Merge-Object_ArraysDifferentIndexProperty()
-{}
+    Assert-That -ActualValue $Differences -Constraint {$ActualValue.Count -eq 0}
+}
+
+#function Test.ObjectJoin_Merge-Object_ArraysSameIndexProperty()
+#{}
+
+#function Test.ObjectJoin_Merge-Object_ArraysDifferentIndexProperty()
+#{}
