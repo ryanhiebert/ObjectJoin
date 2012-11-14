@@ -243,6 +243,8 @@ function ConvertTo-KeyedHashTable {
 }
 
 # FUTURE: Customize so that Primary Array can be from the Pipeline
+# Why isn't it like that already? Because new data is unordered. Ordering data requires having all the data already.
+# So the new, and therefore unordered, data must come in by the Pipeline.
 Function Merge-Object {
     [CmdletBinding()]
     Param(
