@@ -247,14 +247,14 @@ function ConvertTo-KeyedHashTable {
 # So the new, and therefore unordered, data must come in by the Pipeline.
 Function Merge-Object {
     [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true)][object[]]$Base,
-        [Alias("Key")][string]$BaseKey=$null,
+     Param(
+        [Parameter(Mandatory=$true,Position=0)][object[]]$Base,
+        [Alias("Key")][string]$BaseKey='',
         [string]$InputKey=$BaseKey,
-        [switch]$DiscardBaseExtras=$false,
-        [Alias("AppendExtras")][switch]$AppendInputExtras=$false,
+        [switch]$AppendExtras=$false,     #Input
+        [switch]$DiscardLeftovers=$false, #Base
         [switch]$OrderedBase=$false,
-        [Parameter(Mandatory=$true, ValueFromPipeline=$true)][object]$InputObject
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true)][object]$_
         )
     Begin {
         Function Merge($Base, $Additional) {
@@ -270,53 +270,43 @@ Function Merge-Object {
         $BaseHash=@{} ;$i=0; $BaseIndex=0; $BaseKeyIndex=$null
     }
     Process {
-        $Merger = $null # Reset $Merger from last run
-        #Write-Verbose ("Current InputObject: " + $InputObject.$($InputKey))
-        #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose $InputObject.$($InputKey) }
-        if ($BaseKey -eq $null) { $Merger = $Base[$i] } # Pair Objects Naively by Order 
-        elseif ($BaseHash.ContainsKey($BaseKey)) {
-            #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "Contains BaseKey" }
-            $Merger = $BaseHash[$BaseKey]
-            $BaseHash.Remove($BaseKey)
-        }
-        else {
-            #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "Main Else branch" }
-            #Write-Verbose "$i $BaseIndex, $BaseKeyIndex"
-            while (
-                $Base[$BaseIndex] -ne $null -and 
-                $InputObject.$($InputKey) -ne $Base[$BaseIndex].$($BaseKey) -and
-                (!$OrderedBase -or $BaseKeyIndex -lt $InputObject.$($InputKey))
+        $Merger = $null # The object from the base to merge with the current pipline input
+        if ($BaseKey -eq '') {$Merger = $Base[$i]}
+        elseif ($BaseHash.ContainsKey($_.$($InputKey))) {
+            $Merger = $BaseHash[$_.$($InputKey)]
+            $BaseHash.Remove($_.$($InputKey))
+        } else {
+            while(
+                $Base[$BaseIndex] -ne $null -and
+                $_.$($InputKey) -ne $Base[$BaseIndex].$($BaseKey) -and
+                (!$OrderedBase -or $BaseKeyIndex -lt $_.$($InputKey))
             ) {
-                #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "In  while loop" }
-                #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "$i $BaseIndex, $BaseKeyIndex" }
-                #Write-Verbose "$i $BaseIndex, $BaseKeyIndex"
                 $BaseHash.Add($Base[$BaseIndex].$($BaseKey), $Base[$BaseIndex])
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
                 { Write-Verbose "$BaseIndex BaseObjects Processed" }
-            }
-            if ($InputObject.$($InputKey) -eq $Base[$BaseIndex].$($BaseKey)) { 
-                #if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "Match" }
+            } 
+            if ($_.$($InputKey) -eq $Base[$BaseIndex].$($BaseKey)) {
                 $Merger = $Base[$BaseIndex]
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
+                if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
+                { Write-Verbose "$BaseIndex BaseObjects Processed" }
             }
-
         }
+
         if ($Merger -eq $null) {
-            if ($InputObject.UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "merger is null - $AppendInputExtras" }
-            if ($AppendInputExtras) {$InputObject | Clone-Object}
-        } else { Merge $Merger $InputObject }
+            if ($AppendExtras) {$_ | Clone-Object}
+        } else { Merge $Merger $_ }
         $i++
         if ($i -ne 0 -and $i % 200 -eq 0) {Write-Verbose "$i InputObjects Processed"}
     }
     End {
-        if (!$DiscardBaseExtras) {
+        if (!$DiscardLeftovers) {
             Write-Verbose "Emptying Base Cache"
             $BaseHash.GetEnumerator() | % { $_.Value | Clone-Object }
             while ($Base[$BaseIndex] -ne $null) {
-                #if ($Base[$BaseIndex].UserPrincipalName -eq 'aadwashingto@puc.edu') { Write-Verbose "In Base Cach" }
                 $Base[$BaseIndex] | Clone-Object
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
@@ -325,43 +315,3 @@ Function Merge-Object {
         }
     }
 }
-
-
-# The simple way to make this function would be to Merge-Object for each object in the arrays,
-# but it requires that they both be in order and exactly the same. That is too limiting.
-# Instead, it takes a property from each that it will match them on.
-#Function Merge-Object {
-#    [CmdletBinding()]
-#    Param(
-#        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]$Base,
-#        [Parameter(Mandatory=$true)]$Additional,
-#        [Alias("Key")][string]$LeftKey=$null,
-#        [string]$RightKey=$LeftKey,
-#        [switch]$AppendExtras=$false
-#    )
-#
-#    Begin {
-#        Function Merge($Base, $Additional) {
-#            $Clone = $Base | Clone-Object
-#            ForEach ($Property in $($Additional | Get-Member -Type Property, NoteProperty))
-#            {
-#                $Clone | Add-Member -MemberType NoteProperty -Name $Property.name `
-#                    -Value $Additional.$($Property.Name) -ErrorAction SilentlyContinue
-#            }
-#            Return $Clone
-#        Write-Verbose "Creating Intermediate HashTable"
-#        $AddHash = $Additional | ConvertTo-KeyedHashTable -KeyProperty $RightKey
-#        $i = 0
-#    }
-#    Process {
-#        if ($LeftKey -eq $null) { $Key = $i }
-#        else { $Key = $Base.$($LeftKey) }
-#        Merge $Base $AddHash[$Key]
-#        if ($AppendExtras) { $AddHash.Remove($Key) }
-#        Write-Verbose $i
-#        if ($i % 20 -eq 19) { Write-Verbose "$($i+1) Objects Merged" }
-#        $i++
-#    }
-#    End { if ($AppendExtras) { $AddHash.GetEnumerator() | % {$_.Value} } }
-#}
-

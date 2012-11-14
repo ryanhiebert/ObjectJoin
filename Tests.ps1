@@ -112,7 +112,7 @@ function Test.ObjectJoin_Merge-Object_ArraysNaivelyAppendInputExtras()
         (New-Object PSObject -Property @{color='green';index=3})
     )
 
-    $Actual = $a | Merge-Object $b -AppendInputExtras
+    $Actual = $a | Merge-Object $b -AppendExtras
     $Differences = @($Actual | ForEach -Begin {$i=0} -Process {
         if((Compare-ObjectProperties $_ $ab[$i]) -ne $null) {$false}
         $i = $i + 1
@@ -137,7 +137,7 @@ function Test.ObjectJoin_Merge-Object_ArraysNaivelyDiscardBaseExtras()
         (New-Object PSObject -Property @{color='blue';index=2;size='medium';starbucks='grande'})
     )
 
-    $Actual = $a | Merge-Object $b -DiscardBaseExtras
+    $Actual = $a | Merge-Object $b -DiscardLeftovers
     $Differences = @($Actual | ForEach -Begin {$i=0} -Process {
         if((Compare-ObjectProperties $_ $ab[$i]) -ne $null) {$false}
         $i = $i + 1
