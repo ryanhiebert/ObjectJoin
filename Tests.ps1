@@ -3,6 +3,16 @@
 
 Import-Module -Name ".\ObjectJoin.psm1" -Force
 
+function Compare-ObjectProperties
+{
+    Param($a, $b)
+
+    $aProperties = $a | Get-Member -MemberType NoteProperty
+    $bProperties = $b | Get-Member -MemberType NoteProperty
+
+    diff $aProperties $bProperties
+}
+
 function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineImplicitParams()
 {
     $a = New-Object PSObject -Property @{id='a';name='Aye'}
@@ -11,7 +21,7 @@ function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineImplicitParams()
 
     $Actual = $a | Merge-Object $b
 
-    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+    Assert-That -ActualValue $Actual -Constraint {(Compare-ObjectProperties $ActualValue $ab) -eq $null}
 }
 
 function Test.ObjectJoin_Merge-Object_ObjectsImplicitParams()
@@ -22,7 +32,7 @@ function Test.ObjectJoin_Merge-Object_ObjectsImplicitParams()
 
     $Actual = Merge-Object $a $b
 
-    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+    Assert-That -ActualValue $Actual -Constraint {(Compare-ObjectProperties $ActualValue $ab ) -eq $null}
 }
 
 function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineExplicitParams()
@@ -33,7 +43,7 @@ function Test.ObjectJoin_Merge-Object_ObjectsOneFromPipelineExplicitParams()
 
     $Actual = $a | Merge-Object -Base $b
 
-    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+    Assert-That -ActualValue $Actual -Constraint {(Compare-ObjectProperties $ActualValue $ab) -eq $null}
 }
 
 function Test.ObjectJoin_Merge-Object_ObjectsExplicitParams()
@@ -44,7 +54,7 @@ function Test.ObjectJoin_Merge-Object_ObjectsExplicitParams()
 
     $Actual = Merge-Object -InputObject $a -Base $b
 
-    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+    Assert-That -ActualValue $Actual -Constraint {(Compare-ObjectProperties $ActualValue $ab) -eq $null}
 }
 
 function Test.ObjectJoin_Merge-Object_ObjectsWithConflictingProperties()
@@ -55,7 +65,7 @@ function Test.ObjectJoin_Merge-Object_ObjectsWithConflictingProperties()
 
     $Actual = Merge-Object -InputObject $a -Base $b
 
-    Assert-That -ActualValue $Actual -Constraint {(Compare-Object $ActualValue $ab) -eq $null}
+    Assert-That -ActualValue $Actual -Constraint {(Compare-ObjectProperties $ActualValue $ab) -eq $null}
 }
 
 function Test.ObjectJoin_Merge-Object_ArraysNaively()
