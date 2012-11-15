@@ -266,13 +266,16 @@ Function Merge-Object {
             }
             Return $Clone
         }
-        Write-Verbose "Initializing Hash and Indexes"
+        Write-Debug "Initializing Hash and Indexes"
         $BaseHash=@{} ;$i=0; $BaseIndex=0; $BaseKeyIndex=$null
     }
     Process {
+        Write-Debug "$i $BaseIndex $($_.$($InputKey)) $BaseKeyIndex"
         $Merger = $null # The object from the base to merge with the current pipline input
-        if ($BaseKey -eq '') {$Merger = $Base[$i]}
-        elseif ($BaseHash.ContainsKey($_.$($InputKey))) {
+        if ($BaseKey -eq '') {
+            $Merger = $Base[$i]
+            $BaseIndex++
+        } elseif ($BaseHash.ContainsKey($_.$($InputKey))) {
             $Merger = $BaseHash[$_.$($InputKey)]
             $BaseHash.Remove($_.$($InputKey))
         } else {
@@ -285,14 +288,14 @@ Function Merge-Object {
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Verbose "$BaseIndex BaseObjects Processed" }
+                { Write-Debug "$BaseIndex BaseObjects Processed" }
             } 
             if ($_.$($InputKey) -eq $Base[$BaseIndex].$($BaseKey)) {
                 $Merger = $Base[$BaseIndex]
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Verbose "$BaseIndex BaseObjects Processed" }
+                { Write-Debug "$BaseIndex BaseObjects Processed" }
             }
         }
 
@@ -300,17 +303,18 @@ Function Merge-Object {
             if ($AppendExtras) {$_ | Clone-Object}
         } else { Merge $Merger $_ }
         $i++
-        if ($i -ne 0 -and $i % 200 -eq 0) {Write-Verbose "$i InputObjects Processed"}
+        if ($i -ne 0 -and $i % 200 -eq 0) {Write-Debug "$i InputObjects Processed"}
     }
     End {
+        Write-Debug $BaseIndex
         if (!$DiscardLeftovers) {
-            Write-Verbose "Emptying Base Cache"
+            Write-Debug "Emptying Base Cache"
             $BaseHash.GetEnumerator() | % { $_.Value | Clone-Object }
             while ($Base[$BaseIndex] -ne $null) {
                 $Base[$BaseIndex] | Clone-Object
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Verbose "$BaseIndex BaseObjects Processed" }
+                { Write-Debug "$BaseIndex BaseObjects Processed" }
             }
         }
     }
