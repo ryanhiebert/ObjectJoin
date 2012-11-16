@@ -266,11 +266,11 @@ Function Merge-Object {
             }
             Return $Clone
         }
-        Write-Debug "Initializing Hash and Indexes"
+        Write-Verbose "Initializing Hash and Indexes"
         $BaseHash=@{} ;$i=0; $BaseIndex=0; $BaseKeyIndex=$null
     }
     Process {
-        Write-Debug "$i $BaseIndex $($_.$($InputKey)) $BaseKeyIndex"
+        Write-Verbose "$i $BaseIndex $($_.$($InputKey)) $BaseKeyIndex"
         $Merger = $null # The object from the base to merge with the current pipline input
         if ($BaseKey -eq '') {
             $Merger = $Base[$i]
@@ -288,14 +288,14 @@ Function Merge-Object {
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Debug "$BaseIndex BaseObjects Processed" }
+                { Write-Verbose "$BaseIndex BaseObjects Processed" }
             } 
             if ($_.$($InputKey) -eq $Base[$BaseIndex].$($BaseKey)) {
                 $Merger = $Base[$BaseIndex]
                 $BaseKeyIndex = $Base[$BaseIndex].$($BaseKey)
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Debug "$BaseIndex BaseObjects Processed" }
+                { Write-Verbose "$BaseIndex BaseObjects Processed" }
             }
         }
 
@@ -303,18 +303,18 @@ Function Merge-Object {
             if ($AppendExtras) {$_ | Clone-Object}
         } else { Merge $Merger $_ }
         $i++
-        if ($i -ne 0 -and $i % 200 -eq 0) {Write-Debug "$i InputObjects Processed"}
+        if ($i -ne 0 -and $i % 200 -eq 0) {Write-Verbose "$i InputObjects Processed"}
     }
     End {
-        Write-Debug $BaseIndex
+        Write-Verbose $BaseIndex
         if (!$DiscardLeftovers) {
-            Write-Debug "Emptying Base Cache"
+            Write-Verbose "Emptying Base Cache"
             $BaseHash.GetEnumerator() | % { $_.Value | Clone-Object }
             while ($Base[$BaseIndex] -ne $null) {
                 $Base[$BaseIndex] | Clone-Object
                 $BaseIndex++
                 if ($BaseIndex -ne 0 -and $BaseIndex % 100 -eq 0)
-                { Write-Debug "$BaseIndex BaseObjects Processed" }
+                { Write-Verbose "$BaseIndex BaseObjects Processed" }
             }
         }
     }
