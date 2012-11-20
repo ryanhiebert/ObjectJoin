@@ -272,6 +272,16 @@ Function Merge-Object {
     Process {
         Write-Verbose "$i $BaseIndex $($_.$($InputKey)) $BaseKeyIndex"
         $Merger = $null # The object from the base to merge with the current pipline input
+        if ($BaseKey -ne '' -and $InputKey -ne '' -and 
+            ($_.$($InputKey) -eq $null -or $Base[$BaseIndex].$($BaseKey) -eq $null)) {
+            if ($_.$($InputKey) -eq $null -and $Base[$BaseIndex].$($BaseKey) -eq $null) {
+                Throw "Both the current base and input have a null key property."
+            } elseif ($_.$($InputKey) -eq $null) {
+                Throw "The current input has a null key property."
+            } elseif ($Base[$BaseIndex].$($BaseKey) -eq $null) {
+                Throw "The current base has a null key property."
+            }
+        }
         if ($BaseKey -eq '') {
             $Merger = $Base[$i]
             $BaseIndex++
